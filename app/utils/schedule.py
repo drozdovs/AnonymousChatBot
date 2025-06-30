@@ -54,7 +54,7 @@ class JoinRequestChecker(object):
 
     async def checker(self) -> NoReturn:
         """Check join requests"""
-        logger.info('Strated checking join requests')
+        logger.info('Started checking join requests')
         while True:
             await self.approve()
             await asyncio.sleep(15)
