@@ -1,9 +1,7 @@
 """Payments utils"""
 import random
 import logging
-import uuid
-import asyncio
-from yookassa import Configuration, Payment
+import payok
 
 from dataclasses import dataclass
 
@@ -20,7 +18,6 @@ class BaseBill:
     """Base bill class"""
     id: int
     url: str = 'https://google.com'
-    provider_id: str | None = None
 
 
 class BasePayment(object):
@@ -43,39 +40,40 @@ class BasePayment(object):
 logger = logging.getLogger('payments')
 
 
-class YooKassa(BasePayment):
-    """YooKassa payment class"""
+class PayOK(BasePayment):
+    """PayOK class"""
 
-    def __init__(self, shop_id: str, secret_key: str, return_url: str) -> None:
-        """Initialize the YooKassa class"""
-        Configuration.account_id = shop_id
-        Configuration.secret_key = secret_key
-        self.return_url = return_url
-        self._payments: dict[int, str] = {}
+    def __init__(
+        self, api_id: int, api_key: str, project_id: int, project_secret: str,
+    ) -> None:
+        """Initialize the PayOK class"""
+        self.api = payok.PayOK(api_id, api_key, project_id, project_secret)
 
     async def create_payment(self, amount: int) -> BaseBill:
         """Create payment"""
-        bill_id = self._get_id()
-        payment = await asyncio.to_thread(
-            Payment.create,
-            {
-                "amount": {"value": f"{amount:.2f}", "currency": "RUB"},
-                "confirmation": {"type": "redirect", "return_url": self.return_url},
-                "capture": True,
-                "description": "Balance top up",
-            },
-            idempotence_key=str(uuid.uuid4()),
+        pay_id = self._get_id()
+        url = await self.api.create_bill(
+            pay_id=pay_id,
+            amount=amount,
         )
-        self._payments[bill_id] = payment.id
-        return BaseBill(id=bill_id, url=payment.confirmation.confirmation_url)
+        return BaseBill(
+            id=pay_id,
+            url=url,
+        )
 
     async def check_payment(self, payment_id: int) -> CheckResponse:
         """Check payment"""
-        provider_id = self._payments.get(payment_id)
-        if not provider_id:
+        try:
+            bills = await self.api.get_transactions(payment_id=payment_id)
+        except payok.PayOKError as exc:
+            logger.error('PayOk: [%s] %s' % (exc.message, exc.code))
             return CheckResponse(False)
 
-        payment = await asyncio.to_thread(Payment.find_one, provider_id)
-        is_paid = payment.status == "succeeded" or getattr(payment, "paid", False)
-        amount = int(float(payment.amount.value)) if is_paid else 0
-        return CheckResponse(is_paid, amount)
+        if not bills:
+            return CheckResponse(False)
+
+        bill: payok.Transaction = bills[0]
+        return CheckResponse(
+            bill.is_paid,
+            bill.amount_profit,
+        )

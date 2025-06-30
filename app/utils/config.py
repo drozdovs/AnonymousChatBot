@@ -52,9 +52,10 @@ class Bot(BaseConfig):
 
 class Payments(BaseConfig):
     """Payments settings"""
-    shop_id: str
-    secret_key: str
-    return_url: str
+    api_id: int
+    api_key: str
+    project_id: int
+    project_secret: str
     enabled: bool
 
     class Config:
