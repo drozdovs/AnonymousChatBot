@@ -29,7 +29,7 @@ async def main() -> None:
     os.environ['TZ'] = config.bot.timezone
     time.tzset()
 
-    logger.info('Set timesone to "%s"' % config.bot.timezone)
+    logger.info('Set timezone to "%s"' % config.bot.timezone)
 
     if config.bot.use_redis:
         storage = RedisStorage.from_url(
@@ -44,11 +44,10 @@ async def main() -> None:
     sessionmaker = await create_sessionmaker(config.db)
     payment = (
         payments.BasePayment() if not config.payments.enabled
-        else payments.PayOK(
-            config.payments.api_id,
-            config.payments.api_key,
-            config.payments.project_id,
-            config.payments.project_secret,
+        else payments.YooKassa(
+            config.payments.shop_id,
+            config.payments.secret_key,
+            config.payments.return_url,
         )
     )
 
