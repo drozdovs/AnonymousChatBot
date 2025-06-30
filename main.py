@@ -29,7 +29,7 @@ async def main() -> None:
     os.environ['TZ'] = config.bot.timezone
     time.tzset()
 
-    logger.info('Set timesone to "%s"' % config.bot.timezone)
+    logger.info('Set timezone to "%s"' % config.bot.timezone)
 
     if config.bot.use_redis:
         storage = RedisStorage.from_url(
