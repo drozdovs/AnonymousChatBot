@@ -64,7 +64,7 @@ class YooKassa(BasePayment):
                 "capture": True,
                 "description": "Balance top up",
             },
-            idempotence_key=str(uuid.uuid4()),
+            idempotency_key=str(uuid.uuid4()),
         )
         self._payments[bill_id] = payment.id
         return BaseBill(id=bill_id, url=payment.confirmation.confirmation_url)
