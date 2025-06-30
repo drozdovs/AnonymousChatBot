@@ -1,7 +1,7 @@
 aiogram==3.0.0b7
 asyncpg==0.30.0
 matplotlib==3.8.0
-payok.io==1.0.3
+yookassa==2.3.2
 pydantic[dotenv]==1.10.13
 redis==4.5.4
 sqlalchemy==2.0.36
